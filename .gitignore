@@ -21,6 +21,7 @@ settings.json
 # Project specific.
 config/
 logs/
+temp.py
 
 # Distribution / packaging.
 .Python
