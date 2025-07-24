@@ -1,5 +1,5 @@
 # Standard modules.
-from pathlib import Path
+from os import getenv
 from typing import Callable
 from datetime import datetime
 from logging import getLogger, setLoggerClass
@@ -7,14 +7,18 @@ from logging import getLogger, setLoggerClass
 # Third-party modules.
 import typer
 from colorama import Fore
+from dotenv import load_dotenv
 
 # Custom modules.
 from logger import CustomLogger
+from backup import TodoistBackup
 
 
 app = typer.Typer()
+engine = TodoistBackup()
 setLoggerClass(CustomLogger)
 logger = getLogger(__name__)
+
 
 COLORS = {
     'INFO': Fore.LIGHTGREEN_EX,
@@ -93,17 +97,38 @@ def _register_commands(aliases: dict[str | tuple[str, ...], Callable]) -> None:
 def backup(task: str, format: str, save_path: str) -> None:
     pass
 
+
 def sync() -> None:
     pass
 
-def transfer(id: str, data_type: str) -> None:
+
+def transfer(id: str, data_type: str, transfer_from: str, transfer_to: str) -> None:
     pass
 
-def set_token(token: str) -> None:
-    pass
+
+def set_token(token: str = typer.Argument(..., help='The token you want to use.')) -> None:
+    engine.set_token(token)
+    logger.info('Token has been set.')
+
+def print_token() -> None:
+    # Load the ENV file into os.environ dict.
+    load_dotenv(engine._token_file_path, encoding='utf-8')
+
+    # Try extracting the env value.
+    env = getenv(engine._env_var_name)
+
+    # Determine which token to use
+    token_to_print = engine.token if engine.token else env
+
+    if token_to_print:
+        logger.info(f'Current token: {token_to_print}')
+    else:
+        logger.info('No token has currently been set. Use the "set-token" command to set a token.')
+
 
 def list_projects() -> None:
     pass
+
 
 def list_tasks(id: str, data_type: str) -> None:
     pass
@@ -129,6 +154,10 @@ _register_commands(
         ('st', 'set-token'): {
             'func': set_token,
             'help': 'Sets the API token.'
+        },
+        ('pt', 'print-token'): {
+            'func': print_token,
+            'help': 'Print the currently set token.'
         },
         ('lp', 'proj', 'projects'): {
             'func': list_projects,
